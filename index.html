@@ -365,6 +365,7 @@ body.dia select.inp option, body.tarde select.inp option, body.noche select.inp 
     <div class="logo">FRESH<em>TRACK</em></div>
     <div class="header-right">
       <div class="clock" id="clock">00:00</div>
+      <button id="btn-install" onclick="instalarApp()" style="display:none;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:var(--accent);color:var(--btn-text,#fff);font-family:'Outfit',sans-serif;font-size:.72rem;cursor:pointer;font-weight:600;">⬇ Instalar</button>
       <button class="theme-btn" id="theme-btn" onclick="ciclarTema()">🌙</button>
     </div>
   </div>
@@ -897,6 +898,27 @@ render();
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
+}
+
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('btn-install').style.display = 'block';
+});
+window.addEventListener('appinstalled', () => {
+  document.getElementById('btn-install').style.display = 'none';
+  deferredPrompt = null;
+  toast('APP INSTALADA');
+});
+function instalarApp() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => {
+      deferredPrompt = null;
+      document.getElementById('btn-install').style.display = 'none';
+    });
+  }
 }
 </script>
 </body>
