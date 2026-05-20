@@ -103,14 +103,14 @@ canvas#particles { position:fixed; inset:0; z-index:0; pointer-events:none; }
   position:sticky; top:57px; z-index:99;
 }
 .tab {
-  flex:1; padding:10px 6px;
+  flex:1; padding:12px 6px;
   border:none; background:transparent;
   color:var(--muted);
-  font-family:'Outfit',sans-serif; font-size:0.75rem;
-  cursor:pointer; border-bottom:2px solid transparent;
+  font-family:'Outfit',sans-serif; font-size:0.95rem;
+  font-weight:700; cursor:pointer; border-bottom:2px solid transparent;
   transition:all .3s;
 }
-.tab.active { color:var(--accent); border-bottom-color:var(--accent); font-weight:600; }
+.tab.active { color:var(--accent); border-bottom-color:var(--accent); }
 
 /* ══ CONTENIDO ══════════════════════════════════════ */
 .content {
@@ -394,7 +394,7 @@ body.dia select.inp option, body.tarde select.inp option, body.noche select.inp 
   <!-- TABS -->
   <div class="tabs">
     <button class="tab active" onclick="showTab('agregar',this)">➕ Agregar</button>
-    <button class="tab" onclick="showTab('inventario',this)">📦 Inventario</button>
+    <button class="tab" onclick="showTab('inventario',this)">🧺 Despensa</button>
   </div>
 
   <!-- TAB AGREGAR (primera ventana) -->
