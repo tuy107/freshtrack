@@ -331,6 +331,24 @@ body.dia select.inp option, body.tarde select.inp option, body.noche select.inp 
 }
 .btn-amb:hover { border-color:var(--accent); color:var(--accent); }
 
+/* ══ LANDSCAPE PHONE ════════════════════════════════ */
+@media (orientation:landscape) and (max-height:500px) {
+  .amb-clock { font-size:3rem; letter-spacing:4px; }
+  .amb-date  { font-size:.6rem; margin-top:6px; }
+  .amb-logo  { font-size:.5rem; margin-bottom:6px; }
+  .amb-sug   { top:8px; padding:10px 16px; min-width:240px; }
+  .amb-sug-text { font-size:.78rem; margin-bottom:8px; }
+  .amb-alert { bottom:8px; padding:10px 16px; min-width:240px; }
+  .amb-hint  { display:none; }
+  .amb-center { transform:translateY(-10px); }
+  /* App layout */
+  .header  { padding:8px 16px; }
+  .tabs    { top:49px; }
+  .content { padding:10px 14px; gap:10px; }
+  .counts  { gap:8px; }
+  .count-num { font-size:1.4rem; }
+}
+
 /* ══ TABLET ═════════════════════════════════════════ */
 @media (min-width:768px) {
   .content { max-width:700px; padding:20px; }
