@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FreshTrack</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+
+body {
+  font-family:'Outfit',sans-serif;
+  min-height:100vh;
+  transition:background .5s, color .5s;
+}
+
+/* ══ TEMAS ══════════════════════════════════════════ */
+body.dia {
+  --bg:#f0f4f9;
+  --surface:#ffffff;
+  --surface2:#e6edf6;
+  --border:#ccd8e8;
+  --accent:#3b82f6;
+  --accent2:#10b981;
+  --text:#1a2744;
+  --muted:#607d9a;
+  --glow:rgba(59,130,246,0.12);
+  --particle:59,130,246;
+}
+body.tarde {
+  --bg:#0d0b15;
+  --surface:#15111f;
+  --surface2:#1d1829;
+  --border:#2c2640;
+  --accent:#ff7055;
+  --accent2:#ffc44a;
+  --text:#fdf0e8;
+  --muted:#8a7890;
+  --glow:rgba(255,112,85,0.14);
+  --particle:255,112,85;
+}
+body.noche {
+  --bg:#090c18;
+  --surface:#0e1428;
+  --surface2:#141e35;
+  --border:#1e2c48;
+  --accent:#818cf8;
+  --accent2:#a78bfa;
+  --text:#dde4ff;
+  --muted:#526082;
+  --glow:rgba(129,140,248,0.14);
+  --particle:129,140,248;
+}
+
+canvas#particles { position:fixed; inset:0; z-index:0; pointer-events:none; }
+
+.app { position:relative; z-index:1; background:var(--bg); min-height:100vh; transition:background .5s; }
+
+/* ══ HEADER ════════════════════════════════════════ */
+.header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 20px;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  position:sticky; top:0; z-index:100;
+}
+.logo {
+  font-family:'Orbitron',monospace;
+  font-size:1.2rem; font-weight:800;
+  color:var(--accent);
+  letter-spacing:3px;
+}
+.logo em { color:var(--accent2); font-style:normal; }
+.header-right { display:flex; align-items:center; gap:10px; }
+.clock {
+  font-family:'Orbitron',monospace;
+  font-size:0.8rem; color:var(--muted);
+  letter-spacing:2px;
+}
+.theme-btn {
+  width:36px; height:36px; border-radius:50%;
+  border:1.5px solid var(--border);
+  background:var(--surface2);
+  font-size:1.1rem; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:all .3s;
+}
+.theme-btn:hover { border-color:var(--accent); }
+
+/* ══ TABS ═══════════════════════════════════════════ */
+.tabs {
+  display:flex;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  position:sticky; top:57px; z-index:99;
+}
+.tab {
+  flex:1; padding:10px 6px;
+  border:none; background:transparent;
+  color:var(--muted);
+  font-family:'Outfit',sans-serif; font-size:0.75rem;
+  cursor:pointer; border-bottom:2px solid transparent;
+  transition:all .3s;
+}
+.tab.active { color:var(--accent); border-bottom-color:var(--accent); font-weight:600; }
+
+/* ══ CONTENIDO ══════════════════════════════════════ */
+.content {
+  max-width:540px; margin:0 auto;
+  padding:16px; display:flex; flex-direction:column; gap:14px;
+}
+
+/* ══ CARDS ══════════════════════════════════════════ */
+.card {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:16px;
+  transition:border-color .3s, box-shadow .3s;
+}
+.card:hover { border-color:var(--accent); box-shadow:0 4px 24px var(--glow); }
+
+/* ══ LABELS ═════════════════════════════════════════ */
+.slabel {
+  font-family:'Orbitron',monospace;
+  font-size:0.55rem; letter-spacing:3px;
+  text-transform:uppercase; color:var(--muted);
+  margin-bottom:10px;
+}
+
+/* ══ CÁMARA ═════════════════════════════════════════ */
+.cam-box {
+  display:flex; align-items:center; gap:18px;
+  cursor:pointer; padding:18px;
+}
+.cam-text-title { font-weight:600; font-size:.9rem; color:var(--text); margin-bottom:3px; }
+.cam-text-sub { font-size:.73rem; color:var(--muted); line-height:1.5; }
+
+/* ══ INPUTS ═════════════════════════════════════════ */
+.input-group { display:flex; flex-direction:column; gap:5px; }
+.input-group label {
+  font-family:'Orbitron',monospace;
+  font-size:.55rem; letter-spacing:2px;
+  text-transform:uppercase; color:var(--muted);
+}
+.inp {
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:8px; padding:9px 12px;
+  color:var(--text); font-family:'Outfit',sans-serif;
+  font-size:.87rem; outline:none; width:100%;
+  transition:border-color .3s, box-shadow .3s;
+}
+.inp:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--glow); }
+.inp::placeholder { color:var(--muted); opacity:.5; }
+select.inp { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; padding-right:28px; }
+body.dia select.inp option, body.tarde select.inp option, body.noche select.inp option { background:var(--surface); color:var(--text); }
+.row2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+
+/* ══ BOTONES ════════════════════════════════════════ */
+.btn-voice {
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:8px; padding:10px 12px; color:var(--muted);
+  font-family:'Outfit',sans-serif; font-size:.84rem; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  gap:6px; transition:all .3s; width:100%;
+}
+.btn-voice:hover { border-color:var(--accent); color:var(--accent); }
+.btn-voice.active { border-color:#ef4444; color:#ef4444; }
+.voice-status { font-size:.7rem; color:var(--muted); text-align:center; font-family:'Orbitron',monospace; min-height:15px; letter-spacing:1px; }
+.btn-row { display:flex; gap:8px; }
+.btn { flex:1; padding:10px; border-radius:8px; font-family:'Outfit',sans-serif; font-size:.84rem; cursor:pointer; transition:all .3s; border:none; }
+.btn-sec { background:var(--surface2); border:1px solid var(--border); color:var(--muted); }
+.btn-sec:hover { border-color:var(--accent); color:var(--accent); }
+.btn-pri { background:var(--accent); color:#fff; font-weight:600; }
+.btn-pri:hover { filter:brightness(1.09); transform:translateY(-1px); }
+.btn-danger { background:transparent; border:1px solid rgba(239,68,68,.3); color:#ef4444; border-radius:8px; padding:8px 12px; font-family:'Outfit',sans-serif; font-size:.78rem; cursor:pointer; transition:all .3s; }
+.btn-danger:hover { background:rgba(239,68,68,.1); }
+
+/* ══ CONTADORES ═════════════════════════════════════ */
+.counts { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.count-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:14px; padding:14px 10px; text-align:center;
+  transition:all .3s;
+}
+.count-num { font-family:'Orbitron',monospace; font-size:1.9rem; font-weight:800; line-height:1; margin-bottom:4px; }
+.count-label { font-size:.62rem; color:var(--muted); letter-spacing:.5px; font-family:'Orbitron',monospace; }
+
+/* ══ BÚSQUEDA Y FILTROS ═════════════════════════════ */
+.search-inp {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:10px; padding:10px 14px;
+  color:var(--text); font-family:'Outfit',sans-serif;
+  font-size:.87rem; outline:none; width:100%;
+  transition:border-color .3s, box-shadow .3s;
+}
+.search-inp:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--glow); }
+.search-inp::placeholder { color:var(--muted); opacity:.5; }
+.filters { display:flex; gap:6px; flex-wrap:wrap; }
+.filter-btn {
+  padding:5px 12px; border-radius:100px;
+  border:1px solid var(--border); background:transparent;
+  color:var(--muted); font-family:'Outfit',sans-serif;
+  font-size:.73rem; cursor:pointer; transition:all .2s;
+}
+.filter-btn.active, .filter-btn:hover { border-color:var(--accent); color:var(--accent); background:var(--glow); }
+.cat-pills { display:flex; gap:6px; flex-wrap:wrap; }
+.cat-pill {
+  padding:4px 10px; border-radius:100px; font-size:.71rem;
+  cursor:pointer; border:1px solid var(--border);
+  background:transparent; color:var(--muted);
+  font-family:'Outfit',sans-serif; transition:all .2s;
+}
+
+/* ══ LISTA ══════════════════════════════════════════ */
+.list { display:flex; flex-direction:column; gap:8px; padding-bottom:80px; }
+.product-row {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:14px; padding:12px 14px;
+  display:grid; grid-template-columns:36px 1fr auto auto;
+  align-items:center; gap:10px;
+  transition:transform .25s, box-shadow .25s; animation:rowIn .3s ease;
+  position:relative; overflow:hidden;
+}
+.product-row:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,0.13); }
+@keyframes rowIn { from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)} }
+.row-stripe { position:absolute; left:0; top:0; bottom:0; width:3px; }
+.row-emoji { font-size:1.4rem; text-align:center; }
+.row-name { font-weight:500; font-size:.88rem; color:var(--text); }
+.row-sub { font-size:.68rem; color:var(--muted); margin-top:2px; font-family:'Orbitron',monospace; letter-spacing:.3px; }
+.badge { padding:3px 9px; border-radius:100px; font-size:.64rem; font-weight:600; font-family:'Orbitron',monospace; white-space:nowrap; }
+.del-btn { background:none; border:none; color:var(--muted); cursor:pointer; font-size:.88rem; padding:4px; transition:color .2s; }
+.del-btn:hover { color:#ef4444; }
+.empty { text-align:center; padding:40px 20px; color:var(--muted); }
+.empty .big { font-size:2.5rem; margin-bottom:12px; }
+.empty p { font-size:.8rem; line-height:1.7; font-family:'Orbitron',monospace; letter-spacing:1px; }
+
+/* ══ NOTIF ══════════════════════════════════════════ */
+.notif-banner {
+  background:var(--surface); border:1px solid rgba(239,68,68,.2);
+  border-left:3px solid #ef4444; border-radius:14px; padding:14px;
+  display:none; flex-direction:column; gap:7px;
+}
+.notif-banner.show { display:flex; animation:rowIn .3s ease; }
+.notif-title { font-family:'Orbitron',monospace; font-weight:600; font-size:.75rem; color:#ef4444; letter-spacing:1px; display:flex; justify-content:space-between; align-items:center; }
+.notif-item { font-size:.76rem; color:var(--muted); display:flex; align-items:center; gap:7px; }
+
+/* ══ MODO AMBIENTE ══════════════════════════════════ */
+#modo-ambiente {
+  display:none; position:fixed; inset:0; z-index:500;
+  flex-direction:column; align-items:center; justify-content:center;
+  cursor:pointer; overflow:hidden; background:#000;
+}
+#modo-ambiente.show { display:flex; }
+.amb-bg {
+  position:absolute; inset:0;
+  background-size:cover; background-position:center;
+  transition:opacity 1s ease;
+}
+.amb-overlay {
+  position:absolute; inset:0;
+  background:linear-gradient(to bottom, rgba(0,0,0,.3) 0%, transparent 30%, transparent 70%, rgba(0,0,0,.5) 100%);
+}
+.amb-center { position:relative; z-index:2; text-align:center; }
+.amb-logo { font-family:'Orbitron',monospace; font-size:.65rem; font-weight:800; letter-spacing:6px; margin-bottom:12px; color:rgba(255,255,255,.4); }
+.amb-clock { font-family:'Orbitron',monospace; font-size:5rem; font-weight:800; color:#fff; letter-spacing:6px; text-shadow:0 2px 20px rgba(0,0,0,.4); line-height:1; }
+.amb-date { font-family:'Orbitron',monospace; font-size:.72rem; color:rgba(255,255,255,.55); letter-spacing:4px; margin-top:10px; }
+.amb-alert {
+  position:absolute; bottom:70px; left:50%; transform:translateX(-50%);
+  background:rgba(0,0,0,.65); backdrop-filter:blur(20px);
+  border:1px solid rgba(239,68,68,.3); border-radius:14px;
+  padding:14px 20px; min-width:280px; z-index:3;
+  animation:floatUp .6s ease;
+}
+.amb-alert-title { font-family:'Orbitron',monospace; font-size:.62rem; color:#ef4444; letter-spacing:2px; margin-bottom:8px; }
+.amb-alert-item { font-size:.78rem; color:rgba(255,200,200,.85); display:flex; gap:7px; margin-bottom:4px; }
+.amb-sug {
+  position:absolute; top:30px; left:50%; transform:translateX(-50%);
+  background:rgba(0,0,0,.65); backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,.15); border-radius:14px;
+  padding:14px 20px; min-width:280px; z-index:3; text-align:center;
+  animation:floatUp .6s ease;
+}
+.amb-sug-label { font-family:'Orbitron',monospace; font-size:.55rem; color:rgba(255,255,255,.35); letter-spacing:2px; margin-bottom:6px; }
+.amb-sug-text { font-size:.88rem; color:rgba(255,255,255,.8); line-height:1.5; margin-bottom:12px; }
+.amb-sug-btns { display:flex; gap:8px; justify-content:center; }
+.amb-sug-btn { padding:6px 16px; border-radius:100px; font-size:.75rem; cursor:pointer; font-family:'Outfit',sans-serif; transition:all .2s; }
+.amb-yes { background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.25); color:#fff; }
+.amb-no  { background:transparent; border:1px solid rgba(255,255,255,.12); color:rgba(255,255,255,.35); }
+.amb-yes:hover { background:rgba(255,255,255,.25); }
+.amb-hint { position:absolute; bottom:20px; left:50%; transform:translateX(-50%); font-family:'Orbitron',monospace; font-size:.52rem; color:rgba(255,255,255,.18); letter-spacing:3px; z-index:3; animation:blink 3s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:.18} 50%{opacity:.45} }
+@keyframes floatUp { from{opacity:0;transform:translateX(-50%) translateY(12px)}to{opacity:1;transform:translateX(-50%) translateY(0)} }
+
+/* ══ PROD ENCONTRADO ════════════════════════════════ */
+.prod-found { display:none; border:1px solid var(--accent); border-radius:12px; padding:12px; align-items:center; gap:12px; background:var(--surface); }
+.prod-found.show { display:flex; animation:rowIn .3s ease; }
+
+/* ══ TOAST ══════════════════════════════════════════ */
+.toast {
+  position:fixed; bottom:18px; left:50%; transform:translateX(-50%);
+  background:var(--surface); border:1px solid var(--accent);
+  border-radius:12px; padding:10px 20px;
+  font-size:.8rem; color:var(--text); z-index:999;
+  white-space:nowrap; display:none;
+  box-shadow:0 8px 24px rgba(0,0,0,.15);
+  font-family:'Orbitron',monospace; letter-spacing:1px;
+  animation:rowIn .3s ease;
+}
+.toast.show { display:block; }
+
+/* ══ BTN AMBIENTE ═══════════════════════════════════ */
+.btn-amb {
+  position:fixed; bottom:20px; right:20px; z-index:300;
+  width:42px; height:42px; border-radius:50%;
+  background:var(--surface); border:1.5px solid var(--border);
+  color:var(--muted); font-size:1.1rem; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:all .3s;
+}
+.btn-amb:hover { border-color:var(--accent); color:var(--accent); }
+</style>
+</head>
+<body class="noche">
+
+<canvas id="particles"></canvas>
+
+<div class="app">
+
+  <!-- MODO AMBIENTE -->
+  <div id="modo-ambiente" onclick="salirAmbiente()">
+    <div class="amb-bg" id="amb-bg"></div>
+    <div class="amb-overlay"></div>
+    <div class="amb-center">
+      <div class="amb-logo">FRESHTRACK</div>
+      <div class="amb-clock" id="amb-clock">00:00</div>
+      <div class="amb-date" id="amb-date"></div>
+    </div>
+    <div class="amb-sug" id="amb-sug" style="display:none">
+      <div class="amb-sug-label">SUGERENCIA DEL DÍA</div>
+      <div class="amb-sug-text" id="amb-sug-text"></div>
+      <div class="amb-sug-btns">
+        <button class="amb-sug-btn amb-yes" onclick="abrirReceta(event)">Me gusta 👍</button>
+        <button class="amb-sug-btn amb-no" onclick="ocultarSug(event)">Ahora no</button>
+      </div>
+    </div>
+    <div class="amb-alert" id="amb-alert" style="display:none">
+      <div class="amb-alert-title">⚠ ATENCIÓN DESPENSA</div>
+      <div id="amb-alert-list"></div>
+    </div>
+    <div class="amb-hint">TOCA PARA CONTINUAR</div>
+  </div>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo">FRESH<em>TRACK</em></div>
+    <div class="header-right">
+      <div class="clock" id="clock">00:00</div>
+      <button class="theme-btn" id="theme-btn" onclick="ciclarTema()">🌙</button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('agregar',this)">➕ Agregar</button>
+    <button class="tab" onclick="showTab('inventario',this)">📦 Inventario</button>
+  </div>
+
+  <!-- TAB AGREGAR (primera ventana) -->
+  <div id="tab-agregar" class="content">
+    <div>
+      <div class="slabel">Escanear código</div>
+      <div class="card cam-box" onclick="iniciarScanner()">
+        <div id="cam-icon"></div>
+        <div>
+          <div class="cam-text-title">Toca para escanear</div>
+          <div class="cam-text-sub">Apunta al código de barras del producto</div>
+        </div>
+      </div>
+      <div id="qr-reader" style="display:none;margin-top:10px;border-radius:12px;overflow:hidden;"></div>
+      <button id="btn-stop" onclick="detenerScanner()" style="display:none;width:100%;margin-top:8px;padding:8px;border-radius:8px;border:1px solid rgba(239,68,68,.3);background:transparent;color:#ef4444;font-family:inherit;font-size:.8rem;cursor:pointer;">✕ Detener escáner</button>
+    </div>
+    <div class="prod-found" id="prod-found">
+      <div id="pf-emoji" style="font-size:1.8rem">🛒</div>
+      <div>
+        <div id="pf-name" style="font-weight:500;font-size:.9rem;color:var(--text)"></div>
+        <div id="pf-brand" style="font-size:.74rem;color:var(--muted);margin-top:2px"></div>
+      </div>
+    </div>
+    <div class="card" style="display:flex;flex-direction:column;gap:12px">
+      <div class="slabel">Datos del producto</div>
+      <div class="input-group">
+        <label>Nombre</label>
+        <input class="inp" type="text" id="inp-nombre" placeholder="Leche entera 1L...">
+      </div>
+      <div class="row2">
+        <div class="input-group">
+          <label>Categoría</label>
+          <select class="inp" id="inp-cat">
+            <option value="Lácteos">🥛 Lácteos</option>
+            <option value="Carnes">🥩 Carnes</option>
+            <option value="Frutas y verduras">🥦 Frutas y verduras</option>
+            <option value="Abarrotes">🫙 Abarrotes</option>
+            <option value="Bebidas">🧃 Bebidas</option>
+            <option value="Congelados">🧊 Congelados</option>
+            <option value="Panadería">🍞 Panadería</option>
+            <option value="Otro">📦 Otro</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>Cantidad</label>
+          <input class="inp" type="number" id="inp-cant" value="1" min="1">
+        </div>
+      </div>
+      <div class="input-group">
+        <label>Fecha de caducidad</label>
+        <input class="inp" type="date" id="inp-fecha">
+      </div>
+      <div class="input-group">
+        <label>Código de barras</label>
+        <input class="inp" type="text" id="inp-codigo" placeholder="Escanea o escribe...">
+      </div>
+      <button class="btn-voice" id="btn-voice" onclick="toggleVoz()">🎤 Dictar fecha de caducidad</button>
+      <div class="voice-status" id="voice-status"></div>
+      <div class="btn-row">
+        <button class="btn btn-sec" onclick="limpiar()">Limpiar</button>
+        <button class="btn btn-pri" onclick="agregar()">＋ Agregar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB INVENTARIO -->
+  <div id="tab-inventario" class="content" style="display:none">
+    <div class="notif-banner" id="notif-banner">
+      <div class="notif-title">
+        <span>⚠ REQUIEREN ATENCIÓN</span>
+        <button class="btn-danger" onclick="eliminarVencidos()">Limpiar vencidos</button>
+      </div>
+      <div id="notif-list"></div>
+    </div>
+    <div class="counts">
+      <div class="count-card" style="border-top:2px solid #ef4444">
+        <div class="count-num" id="cnt-v" style="color:#ef4444">0</div>
+        <div class="count-label">VENCIDOS</div>
+      </div>
+      <div class="count-card" style="border-top:2px solid #f59e0b">
+        <div class="count-num" id="cnt-p" style="color:#f59e0b">0</div>
+        <div class="count-label">ESTA SEMANA</div>
+      </div>
+      <div class="count-card" style="border-top:2px solid #10b981">
+        <div class="count-num" id="cnt-o" style="color:#10b981">0</div>
+        <div class="count-label">EN ORDEN</div>
+      </div>
+    </div>
+    <input class="search-inp" placeholder="🔍 Buscar producto..." oninput="render()" id="search">
+    <div class="filters">
+      <button class="filter-btn active" onclick="setFiltro('todos',this)">Todos</button>
+      <button class="filter-btn" onclick="setFiltro('vencido',this)">Vencidos</button>
+      <button class="filter-btn" onclick="setFiltro('proximo',this)">Próximos</button>
+      <button class="filter-btn" onclick="setFiltro('ok',this)">En orden</button>
+    </div>
+    <div class="cat-pills" id="cat-pills"></div>
+    <div class="list" id="list"></div>
+  </div>
+
+</div><!-- .app -->
+
+<button class="btn-amb" onclick="entrarAmbiente()" title="Modo ambiente">🌌</button>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<script>
+// ── TEMAS ─────────────────────────────────────────────────
+const TEMAS_LIST = ['noche','dia','tarde'];
+const TEMA_ICONS = { noche:'🌙', dia:'☀️', tarde:'🌇' };
+const TEMA_PARTICLE = { noche:'129,140,248', dia:'59,130,246', tarde:'255,112,85' };
+let temaActual = 'noche';
+
+function ciclarTema() {
+  const idx = TEMAS_LIST.indexOf(temaActual);
+  temaActual = TEMAS_LIST[(idx+1) % TEMAS_LIST.length];
+  document.body.className = temaActual;
+  document.getElementById('theme-btn').textContent = TEMA_ICONS[temaActual];
+  initParticles();
+}
+
+// ── PARTÍCULAS ────────────────────────────────────────────
+const canvas = document.getElementById('particles');
+const ctx = canvas.getContext('2d');
+let particles = [];
+
+function resizeCanvas() { canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
+
+function initParticles() {
+  const col = TEMA_PARTICLE[temaActual];
+  particles = Array.from({length:50}, ()=>({
+    x:Math.random()*canvas.width, y:Math.random()*canvas.height,
+    r:Math.random()*1.2+0.3,
+    vx:(Math.random()-.5)*.18, vy:(Math.random()-.5)*.18,
+    alpha:Math.random()*.28+.07, color:col
+  }));
+}
+
+function animParticles() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const alphaMulti = temaActual==='dia' ? 0.3 : 1;
+  particles.forEach(p=>{
+    p.x+=p.vx; p.y+=p.vy;
+    if(p.x<0)p.x=canvas.width; if(p.x>canvas.width)p.x=0;
+    if(p.y<0)p.y=canvas.height; if(p.y>canvas.height)p.y=0;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(${p.color},${p.alpha*alphaMulti})`;
+    ctx.fill();
+  });
+  requestAnimationFrame(animParticles);
+}
+
+resizeCanvas(); initParticles(); animParticles();
+window.addEventListener('resize',()=>{ resizeCanvas(); initParticles(); });
+
+// ── IMÁGENES AMBIENTE (galería ampliada) ──────────────────
+const AMB_IMGS = [
+  'https://images.unsplash.com/photo-1500076656116-558758c991c1?w=1200&q=80',
+  'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?w=1200&q=80',
+  'https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=1200&q=80',
+  'https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=1200&q=80',
+  'https://images.unsplash.com/photo-1560493676-04071c5f467b?w=1200&q=80',
+  'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=1200&q=80',
+  'https://images.unsplash.com/photo-1495570689269-d883b1224443?w=1200&q=80',
+  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&q=80',
+  'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=1200&q=80',
+  'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=1200&q=80',
+  'https://images.unsplash.com/photo-1418065460487-3e41a6c84dc5?w=1200&q=80',
+  'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1200&q=80',
+  'https://images.unsplash.com/photo-1504701954957-2010ec3bcec1?w=1200&q=80',
+  'https://images.unsplash.com/photo-1586348943529-beaae6c28db9?w=1200&q=80',
+  'https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?w=1200&q=80',
+  'https://images.unsplash.com/photo-1439853949212-36089e0d0c6a?w=1200&q=80',
+  'https://images.unsplash.com/photo-1533240332313-0db49b459ad6?w=1200&q=80',
+  'https://images.unsplash.com/photo-1448375240586-882707db888b?w=1200&q=80',
+  'https://images.unsplash.com/photo-1532274402911-5a369e4c4bb5?w=1200&q=80',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&q=80',
+];
+let ambIdx=0, ambTimer=null, sugActual=null;
+
+function entrarAmbiente() {
+  document.getElementById('modo-ambiente').classList.add('show');
+  ambIdx = Math.floor(Math.random()*AMB_IMGS.length);
+  cambiarImg();
+  ambTimer = setInterval(cambiarImg, 9000);
+  tickAmb();
+  mostrarAlertaAmb();
+  setTimeout(mostrarSugAmb, 5000);
+}
+
+function salirAmbiente() {
+  document.getElementById('modo-ambiente').classList.remove('show');
+  clearInterval(ambTimer);
+  document.getElementById('amb-sug').style.display='none';
+  document.getElementById('amb-alert').style.display='none';
+}
+
+function cambiarImg() {
+  const bg = document.getElementById('amb-bg');
+  bg.style.opacity = '0';
+  setTimeout(()=>{
+    bg.style.backgroundImage = `url(${AMB_IMGS[ambIdx % AMB_IMGS.length]})`;
+    bg.style.opacity = '1';
+    ambIdx++;
+  }, 1000);
+}
+
+function tickAmb() {
+  if(!document.getElementById('modo-ambiente').classList.contains('show')) return;
+  const now=new Date();
+  const h=String(now.getHours()).padStart(2,'0');
+  const m=String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('amb-clock').textContent=`${h}:${m}`;
+  const dias=['DOMINGO','LUNES','MARTES','MIÉRCOLES','JUEVES','VIERNES','SÁBADO'];
+  const meses=['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+  document.getElementById('amb-date').textContent=`${dias[now.getDay()]} ${now.getDate()} ${meses[now.getMonth()]} ${now.getFullYear()}`;
+  const segs = 60 - now.getSeconds();
+  setTimeout(tickAmb, segs * 1000);
+}
+
+function mostrarAlertaAmb() {
+  const urgentes=productos.filter(p=>getStatus(p.fecha).clase!=='ok');
+  const al=document.getElementById('amb-alert');
+  if(urgentes.length){
+    al.style.display='block';
+    document.getElementById('amb-alert-list').innerHTML=urgentes.slice(0,3).map(p=>{
+      const st=getStatus(p.fecha);
+      return`<div class="amb-alert-item"><span>${getEmoji(p.nombre)}</span><span>${p.nombre} — <b style="color:${st.color}">${st.clase==='vencido'?'Vencido':st.labelCorto}</b></span></div>`;
+    }).join('');
+  } else al.style.display='none';
+}
+
+const SUGS=[
+  {texto:'¿Qué tal preparar una sopa de verduras hoy?',query:'receta sopa verduras facil'},
+  {texto:'¿Te animas con unas quesadillas?',query:'receta quesadillas queso jamon'},
+  {texto:'¿Cómo ves unos huevos rancheros?',query:'receta huevos rancheros caseros'},
+  {texto:'¿Y si preparamos agua de frutas frescas?',query:'receta agua fresca frutas'},
+  {texto:'¿Una ensalada fresca para hoy?',query:'receta ensalada fresca facil'},
+  {texto:'¿Unos chilaquiles para aprovechar lo que hay?',query:'receta chilaquiles faciles'},
+  {texto:'¿Qué tal una pasta con lo que tengas?',query:'receta pasta facil ingredientes basicos'},
+  {texto:'¿Un arroz con verduras para hoy?',query:'receta arroz con verduras facil'},
+];
+
+function mostrarSugAmb() {
+  const proximos=productos.filter(p=>getStatus(p.fecha).clase==='proximo');
+  if(proximos.length){
+    const p=proximos[0];
+    sugActual={texto:`Tienes ${p.nombre} por vencer. ¿Lo usamos hoy?`,query:`receta con ${p.nombre} facil`};
+  } else {
+    sugActual=SUGS[Math.floor(Math.random()*SUGS.length)];
+  }
+  document.getElementById('amb-sug-text').textContent=sugActual.texto;
+  document.getElementById('amb-sug').style.display='block';
+}
+
+function abrirReceta(e) {
+  e.stopPropagation();
+  if(sugActual) window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(sugActual.query)}&sp=CAM%253D`,'_blank');
+  salirAmbiente();
+}
+
+function ocultarSug(e) { e.stopPropagation(); document.getElementById('amb-sug').style.display='none'; }
+
+// ── ICONO CÁMARA ──────────────────────────────────────────
+function dibujarLente() {
+  document.getElementById('cam-icon').innerHTML=`
+  <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+    <rect x="5" y="17" width="46" height="30" rx="6" stroke="var(--accent)" stroke-width="1.8" opacity="0.9"/>
+    <circle cx="28" cy="32" r="10.5" stroke="var(--accent)" stroke-width="1.8" opacity="0.9"/>
+    <circle cx="28" cy="32" r="6.5" stroke="var(--accent)" stroke-width="1.1" opacity="0.45"/>
+    <circle cx="28" cy="32" r="3" fill="var(--accent)" opacity="0.18"/>
+    <path d="M19 17v-3.5a2.5 2.5 0 012.5-2.5h13a2.5 2.5 0 012.5 2.5V17" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" opacity="0.9"/>
+    <rect x="39" y="22" width="6" height="3.5" rx="1.5" fill="var(--accent)" opacity="0.3"/>
+    <circle cx="24" cy="28" r="1.8" fill="white" opacity="0.2"/>
+  </svg>`;
+}
+
+// ── RELOJ ─────────────────────────────────────────────────
+function tickReloj() {
+  const now=new Date();
+  document.getElementById('clock').textContent=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const secsToNext = 60 - now.getSeconds();
+  setTimeout(tickReloj, secsToNext * 1000);
+}
+
+// ── DATOS ─────────────────────────────────────────────────
+const CAT_COLORS={'Lácteos':'#60b8f0','Carnes':'#f07060','Frutas y verduras':'#60c870','Abarrotes':'#f0c040','Bebidas':'#a060f0','Congelados':'#40d8d0','Panadería':'#f0a040','Otro':'#a0a0a0'};
+const EMOJIS={leche:'🥛',yogur:'🥛',queso:'🧀',mantequilla:'🧈',carne:'🥩',pollo:'🍗',pescado:'🐟','atún':'🐟',pan:'🍞',tortilla:'🫓',jugo:'🧃',refresco:'🥤',agua:'💧',huevo:'🥚','jamón':'🍖',salchicha:'🌭',crema:'🥣',mayonesa:'🫙',salsa:'🫙','café':'☕','té':'🍵',cereal:'🥣',avena:'🥣'};
+function getEmoji(n){const s=(n||'').toLowerCase();for(const[k,v]of Object.entries(EMOJIS))if(s.includes(k))return v;return'🛒';}
+
+function getStatus(f){
+  const h=new Date(); h.setHours(0,0,0,0);
+  const d=Math.floor((new Date(f+'T00:00:00')-h)/86400000);
+  let labelCorto;
+  if(d===0) labelCorto='Hoy';
+  else if(d===1) labelCorto='Mañana';
+  else if(d<0) labelCorto='Vencido';
+  else labelCorto=`${d}d`;
+  if(d<0) return{label:'Vencido',labelCorto:'Vencido',clase:'vencido',dias:d,color:'#ef4444'};
+  if(d<=7) return{label:`${d}d`,labelCorto,clase:'proximo',dias:d,color:'#f59e0b'};
+  return{label:`${d}d`,labelCorto,clase:'ok',dias:d,color:'#10b981'};
+}
+
+const fd=d=>{const t=new Date();t.setDate(t.getDate()+d);return t.toISOString().split('T')[0];};
+
+const DEMO_PRODUCTOS=[
+  {id:'1',nombre:'Leche entera Lala 1L',    cat:'Lácteos',          cant:2,fecha:fd(-2),codigo:'7501055300173'},
+  {id:'2',nombre:'Yogur fresa Danone',        cat:'Lácteos',          cant:3,fecha:fd(3), codigo:'7501055300180'},
+  {id:'3',nombre:'Jamón serrano',             cat:'Carnes',           cant:1,fecha:fd(5), codigo:'7501030452123'},
+  {id:'4',nombre:'Queso manchego',            cat:'Lácteos',          cant:1,fecha:fd(14),codigo:null},
+  {id:'5',nombre:'Crema Lala 200g',           cat:'Lácteos',          cant:1,fecha:fd(30),codigo:'7501055301234'},
+  {id:'6',nombre:'Jugo naranja Del Valle',    cat:'Bebidas',          cant:4,fecha:fd(45),codigo:'7501055309876'},
+  {id:'7',nombre:'Tortillas de maíz',         cat:'Panadería',        cant:1,fecha:fd(7), codigo:null},
+  {id:'8',nombre:'Zanahoria',                 cat:'Frutas y verduras',cant:6,fecha:fd(4), codigo:null},
+];
+
+let productos=[], historial=[], filtro='todos', filtrocat='Todas';
+
+// ── PERSISTENCIA ──────────────────────────────────────────
+function cargarDatos(){
+  try{
+    const sp=localStorage.getItem('ft_productos');
+    const sh=localStorage.getItem('ft_historial');
+    productos = sp ? JSON.parse(sp) : DEMO_PRODUCTOS.map(p=>({...p}));
+    historial = sh ? JSON.parse(sh) : [];
+  }catch(e){ productos=DEMO_PRODUCTOS.map(p=>({...p})); historial=[]; }
+}
+function guardarDatos(){
+  try{
+    localStorage.setItem('ft_productos',JSON.stringify(productos));
+    localStorage.setItem('ft_historial',JSON.stringify(historial));
+  }catch(e){}
+}
+
+// ── RENDER ────────────────────────────────────────────────
+function render() {
+  const q=(document.getElementById('search')||{value:''}).value.toLowerCase();
+  const lista=[...productos].filter(p=>{
+    if(q&&!p.nombre.toLowerCase().includes(q))return false;
+    if(filtro!=='todos'&&getStatus(p.fecha).clase!==filtro)return false;
+    if(filtrocat!=='Todas'&&p.cat!==filtrocat)return false;
+    return true;
+  }).sort((a,b)=>getStatus(a.fecha).dias-getStatus(b.fecha).dias);
+
+  document.getElementById('cnt-v').textContent=productos.filter(p=>getStatus(p.fecha).clase==='vencido').length;
+  document.getElementById('cnt-p').textContent=productos.filter(p=>getStatus(p.fecha).clase==='proximo').length;
+  document.getElementById('cnt-o').textContent=productos.filter(p=>getStatus(p.fecha).clase==='ok').length;
+
+  const cats=['Todas',...new Set(productos.map(p=>p.cat))];
+  document.getElementById('cat-pills').innerHTML=cats.map(c=>{
+    const cc=CAT_COLORS[c]||'#888';
+    const act=filtrocat===c;
+    return`<button class="cat-pill" style="${act?`border-color:${cc};color:${cc};background:${cc}22`:''}" onclick="setCat('${c}')">${c==='Todas'?'🗂 Todas':c}</button>`;
+  }).join('');
+
+  const el=document.getElementById('list');
+  if(!lista.length){
+    el.innerHTML=`<div class="empty"><div class="big">🧺</div><p>SIN PRODUCTOS<br>AGREGA UNO EN ➕</p></div>`;
+  } else {
+    el.innerHTML=lista.map(p=>{
+      const st=getStatus(p.fecha);
+      let bt;
+      if(st.clase==='vencido') bt='✕ VENCIDO';
+      else if(st.labelCorto==='Hoy') bt='⚠ HOY';
+      else if(st.labelCorto==='Mañana') bt='⚠ MAÑANA';
+      else if(st.clase==='proximo') bt=`⚠ ${st.label}`;
+      else bt=`✓ ${st.label}`;
+      const cc=CAT_COLORS[p.cat]||'#888';
+      return`<div class="product-row">
+        <div class="row-stripe" style="background:${st.color}"></div>
+        <div class="row-emoji">${getEmoji(p.nombre)}</div>
+        <div>
+          <div class="row-name">${p.nombre}</div>
+          <div class="row-sub"><span style="color:${cc}">${p.cat}</span> · ${p.fecha} · ${p.cant}pz</div>
+        </div>
+        <div class="badge" style="background:${st.color}1e;color:${st.color}">${bt}</div>
+        <button class="del-btn" onclick="eliminar('${p.id}')">✕</button>
+      </div>`;
+    }).join('');
+  }
+
+  const urgentes=productos.filter(p=>getStatus(p.fecha).clase!=='ok');
+  const nb=document.getElementById('notif-banner');
+  if(urgentes.length){
+    nb.classList.add('show');
+    document.getElementById('notif-list').innerHTML=urgentes.map(p=>{
+      const st=getStatus(p.fecha);
+      return`<div class="notif-item"><span>${getEmoji(p.nombre)}</span><span>${p.nombre} — <b style="color:${st.color}">${st.clase==='vencido'?'Vencido':st.labelCorto}</b></span></div>`;
+    }).join('');
+  } else nb.classList.remove('show');
+}
+
+function setFiltro(f,btn){filtro=f;document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');render();}
+function setCat(c){filtrocat=c;render();}
+
+function agregar(){
+  const nombre=document.getElementById('inp-nombre').value.trim();
+  const fecha=document.getElementById('inp-fecha').value;
+  const codigo=document.getElementById('inp-codigo').value.trim();
+  const cat=document.getElementById('inp-cat').value;
+  const cant=parseInt(document.getElementById('inp-cant').value)||1;
+  if(!nombre||!fecha){toast('⚠ NOMBRE Y FECHA REQUERIDOS','#f59e0b');return;}
+  productos.unshift({id:Date.now().toString(),nombre,cat,cant,fecha,codigo:codigo||null});
+  guardarDatos();
+  limpiar(); render();
+  toast(`✓ ${nombre.toUpperCase()} AGREGADO`);
+  showTab('inventario',document.querySelectorAll('.tab')[1]);
+}
+
+function eliminar(id){
+  const p=productos.find(x=>x.id===id);
+  if(p){const st=getStatus(p.fecha);historial.unshift({...p,eliminado:new Date().toLocaleDateString('es-MX'),razon:st.clase==='vencido'?'vencido':st.clase==='proximo'?'próximo':'consumido'});}
+  productos=productos.filter(x=>x.id!==id);
+  guardarDatos(); render(); toast('PRODUCTO ELIMINADO','#6b7280');
+}
+
+function eliminarVencidos(){
+  const vencidos=productos.filter(p=>getStatus(p.fecha).clase==='vencido');
+  vencidos.forEach(p=>historial.unshift({...p,eliminado:new Date().toLocaleDateString('es-MX'),razon:'vencido'}));
+  productos=productos.filter(p=>getStatus(p.fecha).clase!=='vencido');
+  guardarDatos(); render(); toast(`✓ ${vencidos.length} VENCIDOS ELIMINADOS`);
+}
+
+function limpiar(){
+  ['inp-nombre','inp-fecha','inp-codigo'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('inp-cant').value='1';
+  document.getElementById('prod-found').classList.remove('show');
+}
+
+function showTab(id,btn){
+  ['inventario','agregar'].forEach(t=>{
+    const el=document.getElementById('tab-'+t);
+    if(el) el.style.display=t===id?'flex':'none';
+  });
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  if(id==='inventario') render();
+}
+
+// ── SCANNER ───────────────────────────────────────────────
+let scanner=null, scanActivo=false;
+function iniciarScanner(){
+  if(scanActivo)return; scanActivo=true;
+  document.getElementById('qr-reader').style.display='block';
+  document.getElementById('btn-stop').style.display='block';
+  try{
+    scanner=new Html5Qrcode('qr-reader');
+    scanner.start({facingMode:'environment'},{fps:10,qrbox:{width:220,height:100}},onScan,()=>{})
+      .catch(()=>{toast('PERMISO DE CÁMARA DENEGADO','#f59e0b');detenerScanner();});
+  }catch(e){toast('ERROR AL INICIAR CÁMARA','#ef4444');detenerScanner();}
+}
+function detenerScanner(){
+  document.getElementById('qr-reader').style.display='none';
+  document.getElementById('btn-stop').style.display='none';
+  scanActivo=false;
+  if(scanner){scanner.stop().then(()=>{scanner.clear();scanner=null;}).catch(()=>{});}
+}
+async function onScan(codigo){
+  detenerScanner(); document.getElementById('inp-codigo').value=codigo;
+  try{
+    const r=await fetch(`https://world.openfoodfacts.org/api/v0/product/${codigo}.json`);
+    const data=await r.json();
+    if(data.status===1){
+      const p=data.product; const nombre=p.product_name_es||p.product_name||p.brands||codigo;
+      document.getElementById('inp-nombre').value=nombre;
+      document.getElementById('pf-name').textContent=nombre;
+      document.getElementById('pf-brand').textContent=p.brands||'';
+      document.getElementById('pf-emoji').textContent=getEmoji(nombre);
+      document.getElementById('prod-found').classList.add('show');
+      toast(`✓ ${nombre.toUpperCase()}`);
+    }else toast('CÓDIGO NO ENCONTRADO','#f59e0b');
+  }catch(e){toast('SIN CONEXIÓN','#f59e0b');}
+}
+
+// ── VOZ ───────────────────────────────────────────────────
+let recognition=null, escuchando=false;
+function toggleVoz(){
+  if(!('webkitSpeechRecognition'in window)&&!('SpeechRecognition'in window)){toast('VOZ NO SOPORTADA','#ef4444');return;}
+  if(escuchando){recognition&&recognition.stop();return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  recognition=new SR(); recognition.lang='es-MX'; recognition.interimResults=true; recognition.continuous=false;
+  recognition.onstart=()=>{escuchando=true;document.getElementById('btn-voice').classList.add('active');document.getElementById('btn-voice').textContent='🔴 ESCUCHANDO...';document.getElementById('voice-status').textContent='DI: "VENCE EL 15 DE ENERO DEL 27"';};
+  recognition.onresult=(e)=>{
+    const texto=Array.from(e.results).map(x=>x[0].transcript).join('');
+    document.getElementById('voice-status').textContent=`"${texto.toUpperCase()}"`;
+    if(e.results[e.results.length-1].isFinal){const f=parsearFecha(texto);if(f){document.getElementById('inp-fecha').value=f;toast(`✓ FECHA: ${f}`);}else toast('NO ENTENDÍ LA FECHA','#f59e0b');}
+  };
+  recognition.onend=()=>{escuchando=false;document.getElementById('btn-voice').classList.remove('active');document.getElementById('btn-voice').textContent='🎤 Dictar fecha de caducidad';setTimeout(()=>document.getElementById('voice-status').textContent='',3000);};
+  recognition.onerror=()=>{escuchando=false;toast('ERROR DE MICRÓFONO','#ef4444');};
+  recognition.start();
+}
+function parsearFecha(texto){
+  const t=texto.toLowerCase().replace(/del\s+(\d{2,4})/,' $1').replace(/\bde\b/g,' ');
+  const m={enero:1,febrero:2,marzo:3,abril:4,mayo:5,junio:6,julio:7,agosto:8,septiembre:9,octubre:10,noviembre:11,diciembre:12,ene:1,feb:2,mar:3,abr:4,jun:6,jul:7,ago:8,sep:9,oct:10,nov:11,dic:12};
+  let r;
+  if((r=t.match(/(\d{1,2})\s+(\w+)\s+(\d{2,4})/))){const mes=m[r[2]];if(!mes)return null;let a=parseInt(r[3]);if(a<100)a+=2000;return`${a}-${String(mes).padStart(2,'0')}-${r[1].padStart(2,'0')}`;}
+  if((r=t.match(/(\w+)\s+(\d{4})/))){const mes=m[r[1]];if(!mes)return null;return`${r[2]}-${String(mes).padStart(2,'0')}-01`;}
+  return null;
+}
+
+// ── TOAST ─────────────────────────────────────────────────
+let toastTimer;
+function toast(msg,color){
+  const el=document.getElementById('toast');
+  el.textContent=msg;
+  el.style.borderColor=color||'var(--accent)';
+  el.classList.add('show'); clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),3000);
+}
+
+// ── AUTO AMBIENTE ─────────────────────────────────────────
+let inactTimer;
+function resetInac(){clearTimeout(inactTimer);inactTimer=setTimeout(entrarAmbiente,120000);}
+document.addEventListener('touchstart',resetInac);
+document.addEventListener('click',resetInac);
+resetInac();
+
+// ── INIT ──────────────────────────────────────────────────
+cargarDatos();
+dibujarLente();
+tickReloj();
+render();
+</script>
+</body>
+</html>
