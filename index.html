@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FreshTrack</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a1628">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FreshTrack">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 * { box-sizing:border-box; margin:0; padding:0; }
@@ -28,28 +35,29 @@ body.dia {
   --particle:59,130,246;
 }
 body.tarde {
-  --bg:#0d0b15;
-  --surface:#15111f;
-  --surface2:#1d1829;
-  --border:#2c2640;
-  --accent:#ff7055;
-  --accent2:#ffc44a;
-  --text:#fdf0e8;
-  --muted:#8a7890;
-  --glow:rgba(255,112,85,0.14);
-  --particle:255,112,85;
+  --bg:#f0fdf8;
+  --surface:#ffffff;
+  --surface2:#dcfdf4;
+  --border:#a7f3d0;
+  --accent:#0891b2;
+  --accent2:#10b981;
+  --text:#0c3a2e;
+  --muted:#4a8070;
+  --glow:rgba(8,145,178,0.13);
+  --particle:8,145,178;
 }
 body.noche {
-  --bg:#090c18;
-  --surface:#0e1428;
-  --surface2:#141e35;
-  --border:#1e2c48;
-  --accent:#818cf8;
-  --accent2:#a78bfa;
-  --text:#dde4ff;
-  --muted:#526082;
-  --glow:rgba(129,140,248,0.14);
-  --particle:129,140,248;
+  --bg:#0a1628;
+  --surface:#112040;
+  --surface2:#162a52;
+  --border:#1e3a6e;
+  --accent:#ffffff;
+  --accent2:#93c5fd;
+  --text:#f8faff;
+  --muted:#7a9cc0;
+  --glow:rgba(255,255,255,0.10);
+  --particle:255,255,255;
+  --btn-text:#0a1628;
 }
 
 canvas#particles { position:fixed; inset:0; z-index:0; pointer-events:none; }
@@ -172,7 +180,7 @@ body.dia select.inp option, body.tarde select.inp option, body.noche select.inp 
 .btn { flex:1; padding:10px; border-radius:8px; font-family:'Outfit',sans-serif; font-size:.84rem; cursor:pointer; transition:all .3s; border:none; }
 .btn-sec { background:var(--surface2); border:1px solid var(--border); color:var(--muted); }
 .btn-sec:hover { border-color:var(--accent); color:var(--accent); }
-.btn-pri { background:var(--accent); color:#fff; font-weight:600; }
+.btn-pri { background:var(--accent); color:var(--btn-text,#fff); font-weight:600; }
 .btn-pri:hover { filter:brightness(1.09); transform:translateY(-1px); }
 .btn-danger { background:transparent; border:1px solid rgba(239,68,68,.3); color:#ef4444; border-radius:8px; padding:8px 12px; font-family:'Outfit',sans-serif; font-size:.78rem; cursor:pointer; transition:all .3s; }
 .btn-danger:hover { background:rgba(239,68,68,.1); }
@@ -473,8 +481,8 @@ body.dia select.inp option, body.tarde select.inp option, body.noche select.inp 
 <script>
 // ── TEMAS ─────────────────────────────────────────────────
 const TEMAS_LIST = ['noche','dia','tarde'];
-const TEMA_ICONS = { noche:'🌙', dia:'☀️', tarde:'🌇' };
-const TEMA_PARTICLE = { noche:'129,140,248', dia:'59,130,246', tarde:'255,112,85' };
+const TEMA_ICONS = { noche:'🌙', dia:'☀️', tarde:'🌿' };
+const TEMA_PARTICLE = { noche:'255,255,255', dia:'59,130,246', tarde:'8,145,178' };
 let temaActual = 'noche';
 
 function ciclarTema() {
@@ -504,7 +512,7 @@ function initParticles() {
 
 function animParticles() {
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  const alphaMulti = temaActual==='dia' ? 0.3 : 1;
+  const alphaMulti = (temaActual==='dia'||temaActual==='tarde') ? 0.3 : 1;
   particles.forEach(p=>{
     p.x+=p.vx; p.y+=p.vy;
     if(p.x<0)p.x=canvas.width; if(p.x>canvas.width)p.x=0;
@@ -886,6 +894,10 @@ cargarDatos();
 dibujarLente();
 tickReloj();
 render();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
+}
 </script>
 </body>
 </html>
