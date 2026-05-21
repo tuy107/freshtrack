@@ -1,6 +1,6 @@
 {
-  "name": "FreshTrack",
-  "short_name": "FreshTrack",
+  "name": "Fresko",
+  "short_name": "Fresko",
   "description": "Control de caducidad de alimentos",
   "start_url": "/freshtrack/",
   "scope": "/freshtrack/",
