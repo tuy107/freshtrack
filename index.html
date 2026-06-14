@@ -841,22 +841,23 @@ async function cargarMusica(){
       const r=db.transaction('tracks','readonly').objectStore('tracks').getAll();
       r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);
     });
-    musica=all.map(t=>({id:t.id,name:t.name}));
+    musica=all.map(t=>({id:t.id,name:t.name,url:URL.createObjectURL(t.blob)}));
     renderMusica();
   }catch(e){}
 }
 
-async function agregarCanciones(files){
+function agregarCanciones(files){
   if(!files||!files.length)return;
-  const db=await abrirMusicaDB();
-  const store=db.transaction('tracks','readwrite').objectStore('tracks');
-  for(const f of files){
-    const id=Date.now().toString()+Math.random().toString(36).slice(2,6);
-    store.put({id,name:f.name,blob:f});
-    musica.push({id,name:f.name});
-  }
-  toast(`✓ ${files.length} CANCIÓN(ES) AGREGADA(S)`);
-  renderMusica();
+  abrirMusicaDB().then(db=>{
+    const store=db.transaction('tracks','readwrite').objectStore('tracks');
+    for(const f of files){
+      const id=Date.now().toString()+Math.random().toString(36).slice(2,6);
+      store.put({id,name:f.name,blob:f});
+      musica.push({id,name:f.name,url:URL.createObjectURL(f)});
+    }
+    toast(`✓ ${files.length} CANCIÓN(ES) AGREGADA(S)`);
+    renderMusica();
+  });
   document.getElementById('inp-musica-file').value='';
 }
 
@@ -870,36 +871,33 @@ function renderMusica(){
     </div>`).join('');
 }
 
-async function reproducir(i){
-  if(i<0||i>=musica.length)return;
-  const db=await abrirMusicaDB();
-  const rec=await new Promise((res,rej)=>{
-    const r=db.transaction('tracks','readonly').objectStore('tracks').get(musica[i].id);
-    r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);
-  });
-  if(!rec){toast('ARCHIVO NO DISPONIBLE','#ef4444');return;}
+function reproducir(i){
+  if(i<0||i>=musica.length||!musica[i].url)return;
   musicaIdx=i;
-  if(audioEl.src) URL.revokeObjectURL(audioEl.src);
-  audioEl.src=URL.createObjectURL(rec.blob);
-  audioEl.play().catch(()=>{});
+  audioEl.src=musica[i].url;
   document.getElementById('musica-player').style.display='flex';
   document.getElementById('musica-now').textContent=musica[i].name;
+  const p=audioEl.play();
+  if(p&&p.catch) p.catch(()=>toast('TOCA ▶ PARA REPRODUCIR','#f59e0b'));
   renderMusica();
 }
 
 function togglePlay(){
   if(!audioEl.src){ if(musica.length) reproducir(0); return; }
-  if(audioEl.paused) audioEl.play().catch(()=>{}); else audioEl.pause();
+  if(audioEl.paused){
+    const p=audioEl.play();
+    if(p&&p.catch) p.catch(()=>toast('NO SE PUDO REPRODUCIR','#ef4444'));
+  } else audioEl.pause();
 }
 
 function cancionSiguiente(){ if(musica.length) reproducir((musicaIdx+1+musica.length)%musica.length); }
 function cancionAnterior(){ if(musica.length) reproducir((musicaIdx-1+musica.length)%musica.length); }
 
-async function eliminarCancion(e,i){
+function eliminarCancion(e,i){
   e.stopPropagation();
   const m=musica[i];
-  const db=await abrirMusicaDB();
-  db.transaction('tracks','readwrite').objectStore('tracks').delete(m.id);
+  abrirMusicaDB().then(db=>db.transaction('tracks','readwrite').objectStore('tracks').delete(m.id));
+  URL.revokeObjectURL(m.url);
   if(i===musicaIdx){
     audioEl.pause(); audioEl.removeAttribute('src'); audioEl.load();
     musicaIdx=-1;
