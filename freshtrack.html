@@ -878,7 +878,7 @@ function reproducir(i){
   document.getElementById('musica-player').style.display='flex';
   document.getElementById('musica-now').textContent=musica[i].name;
   const p=audioEl.play();
-  if(p&&p.catch) p.catch(()=>toast('TOCA ▶ PARA REPRODUCIR','#f59e0b'));
+  if(p&&p.catch) p.catch(err=>toast(`NO SE PUDO REPRODUCIR (${err.name})`,'#ef4444'));
   renderMusica();
 }
 
@@ -886,7 +886,7 @@ function togglePlay(){
   if(!audioEl.src){ if(musica.length) reproducir(0); return; }
   if(audioEl.paused){
     const p=audioEl.play();
-    if(p&&p.catch) p.catch(()=>toast('NO SE PUDO REPRODUCIR','#ef4444'));
+    if(p&&p.catch) p.catch(err=>toast(`NO SE PUDO REPRODUCIR (${err.name})`,'#ef4444'));
   } else audioEl.pause();
 }
 
@@ -927,6 +927,11 @@ audioEl.addEventListener('timeupdate',()=>{
 audioEl.addEventListener('play',()=>{ actualizarMiniPlayer(); renderMusica(); });
 audioEl.addEventListener('pause',()=>{ actualizarMiniPlayer(); renderMusica(); });
 audioEl.addEventListener('ended',cancionSiguiente);
+audioEl.addEventListener('error',()=>{
+  const codes={1:'ABORTADO',2:'ERROR DE RED',3:'ERROR DE DECODIFICACIÓN',4:'FORMATO NO SOPORTADO'};
+  const code=audioEl.error&&audioEl.error.code;
+  if(code) toast(`AUDIO: ${codes[code]||'ERROR '+code}`,'#ef4444');
+});
 
 function actualizarMiniPlayer(){
   const mp=document.getElementById('mini-player');
